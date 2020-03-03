@@ -7,6 +7,7 @@ const EventEmitter = require('events').EventEmitter;
 class MCLCore extends EventEmitter {
     constructor() {
         super();
+        this.modules = [];
     }
 
     async launch(options) {
@@ -28,6 +29,17 @@ class MCLCore extends EventEmitter {
         await void(0);
 
         this.emit('debug', `[MCLC]: MCLC version ${JSON.parse(fs.readFileSync(path.join(__dirname,'..', 'package.json'), { encoding: 'utf8' })).version}`);
+
+        // Run all register process from modules
+        for (const module of this.modules) {
+            if (!('register' in Object.getPrototypeOf(module))) {
+                this.emit('debug', `[MCLC]: Register method not found in module ${module.getName()}.`);
+                this.emit('close', 1);
+                return null
+            }
+            module.register(this.options);
+        }
+
         const java = await this.handler.checkJava(this.options.javaPath || 'java');
         if(!java.run) {
             this.emit('debug', `[MCLC]: Couldn't start Minecraft due to: ${java.message}`);
@@ -76,6 +88,12 @@ class MCLCore extends EventEmitter {
         if(this.options.version.custom) {
             this.emit('debug', '[MCLC]: Detected custom in options, setting custom version file');
             custom = JSON.parse(fs.readFileSync(path.join(this.options.root, 'versions', this.options.version.custom, `${this.options.version.custom}.json`), { encoding: 'utf8' }));
+        }
+
+        for (const module of this.modules) {
+            if ('download' in Object.getPrototypeOf(module)) {
+                await module.download(this.handler);
+            }
         }
 
         const args = [];
@@ -131,6 +149,20 @@ class MCLCore extends EventEmitter {
         minecraft.on('close', (code) => this.emit('close', code));
 
         return minecraft;
+    }
+
+    // Method to register a new module
+    use (Module) {
+        // Check if the module already exist in the list
+        for (const module in this.modules) {
+            if (module instanceof Module) {
+                return;
+            }
+        }
+
+        // Add the module to the list
+        const module = new Module(this)
+        this.modules.push(module);
     }
 }
 
