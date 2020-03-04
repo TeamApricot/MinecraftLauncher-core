@@ -56,6 +56,7 @@ launcher.on('data', (e) => console.log(e));
 | Function | Type    | Description                                                                             |
 |----------|---------|-----------------------------------------------------------------------------------------|
 | `launch` | Promise | Launches the client with the specified `options`  as a parameter. Returns child the process |
+| `use` | Void | Add plugin for MCLC, allowing it to have new features |
 
 ##### launch
 
