@@ -92,9 +92,9 @@ class Handler {
         });
     }
 
-    checkSum(hash, file) {
+    checkSum(hash, file, options = {}) {
         return new Promise(resolve => {
-            checksum.file(file, (err, sum) => resolve(hash === sum));
+            checksum.file(file, options, (err, sum) => resolve(hash === sum));
         });
     }
 
